@@ -58,11 +58,8 @@
             this.radioButton4 = new System.Windows.Forms.RadioButton();
             this.radioButton6 = new System.Windows.Forms.RadioButton();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.listBox2 = new System.Windows.Forms.ListBox();
-            this.listBox3 = new System.Windows.Forms.ListBox();
             this.chartControl1 = new 覆盤.ChartControl();
             this.stopLimitControl1 = new 覆盤.StopLimitControl();
-            this.listBox4 = new System.Windows.Forms.ListBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
@@ -490,24 +487,6 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "groupBox1";
             // 
-            // listBox2
-            // 
-            this.listBox2.FormattingEnabled = true;
-            this.listBox2.ItemHeight = 12;
-            this.listBox2.Location = new System.Drawing.Point(409, 92);
-            this.listBox2.Name = "listBox2";
-            this.listBox2.Size = new System.Drawing.Size(671, 232);
-            this.listBox2.TabIndex = 120;
-            // 
-            // listBox3
-            // 
-            this.listBox3.FormattingEnabled = true;
-            this.listBox3.ItemHeight = 12;
-            this.listBox3.Location = new System.Drawing.Point(409, 381);
-            this.listBox3.Name = "listBox3";
-            this.listBox3.Size = new System.Drawing.Size(671, 232);
-            this.listBox3.TabIndex = 121;
-            // 
             // chartControl1
             // 
             this.chartControl1.Location = new System.Drawing.Point(9, 49);
@@ -523,24 +502,12 @@
             this.stopLimitControl1.Size = new System.Drawing.Size(330, 792);
             this.stopLimitControl1.TabIndex = 110;
             // 
-            // listBox4
-            // 
-            this.listBox4.FormattingEnabled = true;
-            this.listBox4.ItemHeight = 12;
-            this.listBox4.Location = new System.Drawing.Point(409, 638);
-            this.listBox4.Name = "listBox4";
-            this.listBox4.Size = new System.Drawing.Size(671, 232);
-            this.listBox4.TabIndex = 122;
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.ClientSize = new System.Drawing.Size(1598, 931);
-            this.Controls.Add(this.listBox4);
-            this.Controls.Add(this.listBox3);
-            this.Controls.Add(this.listBox2);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.radioButton6);
             this.Controls.Add(this.radioButton4);
@@ -607,9 +574,6 @@
         private System.Windows.Forms.RadioButton radioButton4;
         private System.Windows.Forms.RadioButton radioButton6;
         private System.Windows.Forms.GroupBox groupBox1;
-        private System.Windows.Forms.ListBox listBox2;
-        private System.Windows.Forms.ListBox listBox3;
-        private System.Windows.Forms.ListBox listBox4;
         public StopLimitControl stopLimitControl1;
     }
 }

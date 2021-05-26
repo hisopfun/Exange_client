@@ -453,6 +453,7 @@ namespace 覆盤
             int BCount = 0, ACount = 0;
             lock (simu.Lock)
             {
+
                 for (int i = 0; i < simu.MarketList.Count; i++)
                     setMarketValue(simu.MarketList[i].Price, simu.MarketList[i].BS, simu.MarketList[i].Qty.ToString());
 
@@ -480,11 +481,10 @@ namespace 覆盤
                     //Add to seen list
                     seen.Add(simu.LimList[i]);
                 }
-                if (seen.Count > 0)
-                {
-                    setLimitValue("0", "B", BCount.ToString());
-                    setLimitValue("0", "S", ACount.ToString());
-                }
+
+                setLimitValue("0", "B", BCount.ToString());
+                setLimitValue("0", "S", ACount.ToString());
+
 
                 BCount = 0; ACount = 0;
                 seen = new List<Simulation.match>();

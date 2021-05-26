@@ -35,8 +35,9 @@ namespace 覆盤
         TIMES times;
         SOCKET orderSocket;
         SOCKET quoteSocket;
+        TickEncoder TE = new TickEncoder();
         //TickEncoder tickGUI;
-
+        int price = 10000;
         strategy plan10M, planMACD, planOSC, planNightReverse;
 
         public void write(string path, string content)
@@ -103,127 +104,138 @@ namespace 覆盤
         public void OnMarketEncoded(object sender, ReportEventArgs e)
         {
             if (e.Report == "") return;
-            listBox4.InvokeIfRequired(() =>{
-                listBox4.Items.Insert(0, e.Report);
-            });
+
+
+            if (e.Report.Contains("Mat")) {
+                string[] tick = e.Report.Replace("\n", "").Replace("Mat:", "").Split(',');
+                string time = tick[0].Substring(11,12).Replace(":","").Replace(".","");
+                string pri = tick[4].Replace(".0", "");
+                string qty = tick[3];
+                string BS = tick[2];
+                string stockNo = tick[1];
+                TE.Encode($",{time},,,{pri},{qty},,,,,,{stockNo}");
+            }
 
             if (e.Report.Contains("Ord"))
             {
-                stopLimitControl1.DGV_StopLimit.InvokeIfRequired(() =>
+
+                //stopLimitControl1.DeleteMarket();
+                string[] marketLimit = e.Report.Replace("\n", "").Replace("Ord:", "").Replace(" ", "").Split('|');
+
+                List<Simulation.match> dep = stopLimitControl1.simu.MarketList.ToList();
+                for (int i = 0; i < dep.Count; i++)
                 {
-                    stopLimitControl1.DGV_StopLimit.Enabled = false;
-               
+                    dep[i].Qty = "";
+                }
 
-                    //stopLimitControl1.DeleteMarket();
-                    string[] marketLimit = e.Report.Replace("\n", "").Replace("Ord:", "").Replace(" ", "").Split('|');
+                stopLimitControl1.simu.MarketList.RemoveRange(0, stopLimitControl1.simu.MarketList.Count);
+                int BCount = 0, ACount = 0;
+                foreach (string m in marketLimit) {
+                    if (!m.Contains("B") && !m.Contains("S")) break;
+                    string[] tick = m.Split(',');
+                    string pri = tick[2].Replace(".0", "");
+                    string qty = tick[3];
+                    string BS = tick[1];
+                    string stockNo = tick[0];
 
-                    List<Simulation.match> dep = stopLimitControl1.simu.MarketList.ToList();
-                    for (int i = 0; i < dep.Count; i++)
-                    {
-                        dep[i].Qty = "";
-                    }
+                    //count total market limit
+                    if (tick[1] == "B")
+                        BCount += int.Parse(tick[3]);
+                    else if (tick[1] == "S")
+                        ACount += int.Parse(tick[3]);
 
-                    stopLimitControl1.simu.MarketList.RemoveRange(0, stopLimitControl1.simu.MarketList.Count);
-                    int BCount = 0, ACount = 0;
-                    foreach (string m in marketLimit) {
-                        if (!m.Contains("B") && !m.Contains("S")) break;
-                        string[] tick = m.Split(',');
-                        string pri = tick[2].Replace(".0", "");
-                        string qty = tick[3];
-                        string BS = tick[1];
-                        string stockNo = tick[0];
 
-                        //count total market limit
-                        if (tick[1] == "B")
-                            BCount += int.Parse(tick[3]);
-                        else if (tick[1] == "S")
-                            ACount += int.Parse(tick[3]);
 
-                        //total market limit
-                        stopLimitControl1.setMarketValue("0", "B", BCount.ToString());
-                        stopLimitControl1.setMarketValue("0", "S", ACount.ToString());
-
-                        //change list
-                        for (int i = 0; i < dep.Count; i++) {
-                            if (pri == dep[i].Price) {
-                                dep[i].Qty = qty;
-                                break;
-                            }
-                            if (i == dep.Count - 1) {
-                                dep.Add(new Simulation.match("", stockNo, BS, qty, pri, "0"));
-                            }
+                    //change list
+                    for (int i = 0; i < dep.Count; i++) {
+                        if (pri == dep[i].Price) {
+                            dep[i].Qty = qty;
+                            break;
                         }
-
-                        //add marketlist
-                        stopLimitControl1.simu.MarketList.Add(new Simulation.match("", stockNo, BS, qty, pri, "0"));
+                        if (i == dep.Count - 1) {
+                            dep.Add(new Simulation.match("", stockNo, BS, qty, pri, "0"));
+                        }
                     }
 
-                    //update markdet limit
-                    for (int i = 0; i < dep.Count; i++)
-                    {
-                        stopLimitControl1.setMarketValue(dep[i].Price, dep[i].BS, dep[i].Qty);
-                    }
-                     stopLimitControl1.DGV_StopLimit.Enabled = true;
-                });
+                    //add marketlist
+                    stopLimitControl1.simu.MarketList.Add(new Simulation.match("", stockNo, BS, qty, pri, "0"));
+                }
+
+                //update markdet limit
+                for (int i = 0; i < dep.Count; i++)
+                {
+                    stopLimitControl1.setMarketValue(dep[i].Price, dep[i].BS, dep[i].Qty);
+                }
+
+                //total market limit
+                stopLimitControl1.setMarketValue("0", "B", BCount.ToString());
+                stopLimitControl1.setMarketValue("0", "S", ACount.ToString());
+          
             }
 
         }
         public void OnReportEncoded(object sender, ReportEventArgs e) {
             if (e.Report == "") return;
             
-            linkLabel1.InvokeIfRequired(() =>
+
+
+
+            //mat report
+            if (e.Report.Contains("Mat"))
             {
-                linkLabel1.Text += e.Report;
-            });
+                string[] limit = e.Report.Replace("\n", "").Replace("Mat report:", "").Split(',');
+                string time = limit[0].Substring(11, 12).Replace(":", "").Replace(".", "");
+                string pri = limit[4].Replace(".0", "");
+                string qty = limit[3];
+                string BS = limit[2];
+                string stockNo = limit[1];
+                stopLimitControl1.simu.MatList.Add(new Simulation.match(time, stockNo, BS, qty, pri, "0"));
+                linkLabel1.InvokeIfRequired(() =>
+                {
+                    if (BS == "B")
+                    {
+                        linkLabel1.Text = "Match: Buy " + qty + " " + pri;
+                    }
+                    else if (BS == "S")
+                    {
+                        linkLabel1.Text = "Match: Sell " + qty + " " + pri;
+                    }
+                });
+            }
 
-            stopLimitControl1.DGV_StopLimit.InvokeIfRequired(() =>
+            //order report
+            if (e.Report.Contains("Ord"))
             {
-                stopLimitControl1.DGV_StopLimit.Enabled = false;
+   
+                //stopLimitControl1.DeleteLimit();
+                string[] limit = e.Report.Replace("\n", "").Replace("Ord report:", "").Replace(" ", "").Split(',');
+                string pri = limit[4].Replace(".0", "");
+                string qty = limit[3];
+                string BS = limit[2];
+                stopLimitControl1.simu.Limit(limit[0], limit[1], limit[2], limit[3], pri);
+       
+                stopLimitControl1.setLimitValue(limit[4].Replace(".0", ""), limit[2],
+                    stopLimitControl1.simu.LimList.Where(ee => ee.Price.ToString() == pri && ee.BS.ToString() == BS).Count().ToString());
+             
+            }
 
-                //mat report
-                if (e.Report.Contains("Mat"))
-                {
-                    listBox2.InvokeIfRequired(() =>
-                    {
-                        listBox2.Items.Insert(0, e.Report);
-                    });
+            //delete limit
+            if (e.Report.Contains("Del"))
+            {
+                if (!e.Report.Contains("B") && !e.Report.Contains("S")) return;
 
-                }
-
-                //order report
-                if (e.Report.Contains("Ord"))
-                {
-                    listBox3.InvokeIfRequired(() =>
-                    {
-                        listBox3.Items.Insert(0, e.Report);
-                    });
-                    //stopLimitControl1.DeleteLimit();
-                    string[] limit = e.Report.Replace("\n", "").Replace("Ord report:", "").Replace(" ", "").Split(',');
-                    string pri = limit[4].Replace(".0", "");
-                    string qty = limit[3];
-                    string BS = limit[2];
-                    stopLimitControl1.simu.Limit(limit[0], limit[1], limit[2], limit[3], pri);
-                    stopLimitControl1.setLimitValue(limit[4].Replace(".0", ""), limit[2], 
-                        stopLimitControl1.simu.LimList.Where(ee => ee.Price.ToString() == pri && ee.BS.ToString() == BS).Count().ToString());
-                }
-
-                //delete limit
-                if (e.Report.Contains("Del"))
-                {
-                    listBox3.InvokeIfRequired(() =>
-                    {
-                        listBox3.Items.Insert(0, e.Report);
-                    });
-                    //stopLimitControl1.DeleteLimit();
-                    string[] limit = e.Report.Replace("\n", "").Replace("Ord report:", "").Replace(" ", "").Split(',');
-                    string pri = limit[4].Replace(".0", "");
-                    string qty = limit[3];
-                    string BS = limit[2];
-                    stopLimitControl1.simu.DeleteOrder(stopLimitControl1.simu.LimList, limit[2], limit[4].Replace(".0", ""));
-                    stopLimitControl1.setLimitValue(limit[4].Replace(".0", ""), limit[2],
-                               stopLimitControl1.simu.LimList.Where(ee => ee.Price.ToString() == pri && ee.BS.ToString() == BS).Count().ToString());
-                }
-            });
+                //stopLimitControl1.DeleteLimit();
+                string[] limit = e.Report.Replace("\n", "").Replace("Del report:", "").Replace(" ", "").Split(',');
+                string pri = limit[4].Replace(".0", "");
+                string qty = limit[3];
+                string BS = limit[2];
+              
+                stopLimitControl1.simu.DeleteOrder(stopLimitControl1.simu.LimList, limit[2], limit[4].Replace(".0", ""));
+        
+                stopLimitControl1.setLimitValue(limit[4].Replace(".0", ""), limit[2],
+                            stopLimitControl1.simu.LimList.Where(ee => ee.Price.ToString() == pri && ee.BS.ToString() == BS).Count().ToString());
+           
+            }
         }
 
         public void OnOrderEncoded(object sender, OrderEventArgs e)
@@ -245,6 +257,8 @@ namespace 覆盤
             //StopLimit
             //stopLimitControl1.StopLimitDGV(word[4], word[2], word[3], word[5]);
 
+            price = int.Parse(word[4]);
+
             //MK
             MKdata.Run(word[1], word[4], word[5]);
 
@@ -259,7 +273,7 @@ namespace 覆盤
             }
 
             //draw
-            MITandLIT(word);
+            //MITandLIT(word);
 
         }
 
@@ -299,6 +313,8 @@ namespace 覆盤
             radioButton1.Checked = true;
             chartControl1.InitChart(Kind.Line);
             tabControl1.TabPages.Remove(tabPage3);
+
+            start("");
         }
 
 
@@ -358,11 +374,13 @@ namespace 覆盤
             }
 
 
-            orderSocket = new SOCKET(date, "192.168.0.106", 3576);
+            orderSocket = new SOCKET(date, "54.196.202.53", 3576);
             orderSocket.RE.ReportEncoded += new ReportEncoder.ReportEncoderEventHandler(OnReportEncoded);
 
-            quoteSocket = new SOCKET(date, "192.168.0.106", 3575);
+            quoteSocket = new SOCKET(date, "174.129.45.152", 3575);
             quoteSocket.RE.ReportEncoded += new ReportEncoder.ReportEncoderEventHandler(OnMarketEncoded);
+
+            TE.TickEncoded += new TickEncoder.TickEncoderEventHandler(OnTickEncoded);
 
             if (T_Quote != null)
                 T_Quote.Abort();
@@ -469,7 +487,7 @@ namespace 覆盤
                 lock (Lock)
                 {
 
-                    stopLimitControl1.gui("10000", 10000);
+                    stopLimitControl1.gui("10000", price);
                     if (MKdata.klist.Count > 0 && DKdata.klist.Count > 0)
                     {
 

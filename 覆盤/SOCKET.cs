@@ -207,7 +207,7 @@ namespace 覆盤
                     msg = Encoding.UTF8.GetString(state.buffer, 0, bytesRead);
 
 
-                    string[] report = msg.Split('\n');
+                    string[] report = msg.Replace("\0","").Split('\n');
                     for (int i = 0; i < report.Length ; i++){
                         RE.Encode(report[i]);
                     }
